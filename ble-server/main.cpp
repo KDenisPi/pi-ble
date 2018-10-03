@@ -30,7 +30,7 @@ int main (int argc, char* argv[])
         std::cout <<  "BLE server. Services registered" << std::endl;
 
         //wait for some time (check on client side that registration is visible)
-        sleep( 10 );
+        sleep( 20 );
 
         std::cout <<  "BLE server. Unregister services" << std::endl;
         bleServer->sdp_unregister();
