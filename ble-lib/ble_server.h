@@ -72,7 +72,7 @@ public:
         // 1-4095 reserved numbers
         // PSM is odd number
         if(psm < 4095 || psm > 35765 || ((psm%2) == 0) ){
-            std::cout <<  std::string(__func__) << " Invalid PSM number" << std::endl;
+            std::cout <<  std::string(__func__) << " Invalid PSM number (Should be odd number between 4095-35765)" << std::endl;
             //Invalid PSM
             return false;
         }
@@ -155,7 +155,7 @@ public:
             sdp_list_append( _l2cap_list, _psm );
 
             //Add protocol
-            _proto_list = sdp_list_append( 0, _l2cap_list );
+            _proto_list = sdp_list_append( _proto_list, _l2cap_list );
         }
 
         // RFCOMM
@@ -278,21 +278,31 @@ private:
         }
 
         sdp_list_free( _root_list, 0 );
+        _root_list = nullptr;
+
         sdp_list_free( _access_proto_list, 0 );
+        _access_proto_list = nullptr;
+
         sdp_list_free( _proto_list, 0 );
+        _proto_list = nullptr;
 
         if( is_rfcomm_enabled() ){
             sdp_list_free( _rfcomm_list, 0 );
+            _rfcomm_list = nullptr;
             sdp_data_free( _channel );
+            _channel = nullptr;
         }
 
         if( is_l2cap_enabled()){
             sdp_list_free( _l2cap_list, 0 );
+            _l2cap_list = nullptr;
             sdp_data_free( _psm );
+            _psm = nullptr;
         }
 
         if( is_att_enabled() ){
             sdp_list_free( _att_list, 0 );
+            _att_list = nullptr;
         }
     }
 };
@@ -306,7 +316,9 @@ using BleSevicePtr = std::shared_ptr<BleService>;
 class BleServer {
 public:
     BleServer() {}
-    virtual ~BleServer() {}
+    virtual ~BleServer() {
+        _services.empty();
+    }
 
    /*
    * Register server on SDP
@@ -319,7 +331,7 @@ public:
 
         //Register all available services
         session = sdp_connect( &baddr_any, &baddr_local, SDP_RETRY_IF_BUSY );
-        if( session == NULL ){
+        if( !session ){
             std::cout <<  std::string(__func__) << " Session connection error. Err:" << std::to_string(errno) << std::endl;
             // Failed print errno
             return false;
