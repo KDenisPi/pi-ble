@@ -38,8 +38,8 @@ int main (int argc, char* argv[])
         //wait for some time (check on client side that registration is visible)
         sleep( 20 );
 
-        std::cout <<  "BLE server. Unregister services" << std::endl;
-        bleServer->sdp_unregister(server_addr);
+        std::cout <<  "BLE server. Close connection. Unregister services" << std::endl;
+        bleServer->close_connection();
     }
   }
 

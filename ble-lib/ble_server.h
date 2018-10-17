@@ -317,6 +317,7 @@ class BleServer {
 public:
     BleServer() {}
     virtual ~BleServer() {
+        close_connection();
         _services.empty();
     }
 
@@ -328,7 +329,6 @@ public:
    virtual bool sdp_register(const std::string server_addr) {
         bdaddr_t baddr_any = {0,0,0,0,0,0};
         bdaddr_t baddr_target = {0, 0, 0, 0xff, 0xff, 0xff}; //local by default
-        sdp_session_t *session = nullptr;
         int ret = 0;
 
         if( !server_addr.empty() ){
@@ -337,11 +337,18 @@ public:
                 //invalid address
                 return false;
             }
+            // save server address
+            _server_addr = server_addr;
+        }
+
+        if( _session ){
+            // I am not going to support more than one connection for now
+            close_connection();
         }
 
         //Register all available services
-        session = sdp_connect( &baddr_any, &baddr_target, SDP_RETRY_IF_BUSY );
-        if( !session ){
+        _session = sdp_connect( &baddr_any, &baddr_target, SDP_RETRY_IF_BUSY );
+        if( !_session ){
             std::cout <<  std::string(__func__) << " Session connection error. Err:" << std::to_string(errno) << std::endl;
             // Failed print errno
             return false;
@@ -350,10 +357,11 @@ public:
         for (auto it = _services.begin(); it != _services.end(); ++it) {
             std::cout <<  std::string(__func__) << " Register service: " << it->second->get_name() << std::endl;
             if(!it->second->is_registered()){
-                ret = sdp_record_register(session, it->second->get_record(), 0);
+                ret = sdp_record_register(_session, it->second->get_record(), 0);
                 if( ret == 0 ){
                     // Mark service as registered
                     _services[it->first]->set_registered(true);
+                    std::cout <<  std::string(__func__) << " Registered successfully. Service: " << it->second->get_name() << std::endl;
                 }
                 else {
                     std::cout <<  std::string(__func__) << " Service registration error. Err:" << std::to_string(ret) << std::endl;
@@ -365,71 +373,35 @@ public:
             }
         }
 
-        sdp_close( session );
-
        return true;
-    }
-
-   /*
-   * Un-Register all servers from SDP
-   *
-   */
-   virtual bool sdp_unregister(const std::string server_addr) {
-        bdaddr_t baddr_any = {0,0,0,0,0,0};
-        bdaddr_t baddr_target = {0, 0, 0, 0xff, 0xff, 0xff}; //local by default
-        sdp_session_t *session = nullptr;
-
-        if( !server_addr.empty() ){
-            if( str2ba( server_addr.c_str(), &baddr_target ) < 0 ){
-                std::cout <<  std::string(__func__) << " Invalid server address." << std::endl;
-                //invalid address
-                return false;
-            }
-        }
-
-        //Register all available services
-        session = sdp_connect( &baddr_any, &baddr_target, SDP_RETRY_IF_BUSY );
-        if( session == NULL ){
-            std::cout <<  std::string(__func__) << " Session connection error. Err:" << std::to_string(errno) << std::endl;
-            // Failed print errno
-            return false;
-        }
-
-        for (auto it = _services.begin(); it != _services.end(); ++it) {
-            std::cout <<  std::string(__func__) << " Un-Register service: " << it->second->get_name() << std::endl;
-
-            if(it->second->is_registered()){
-                int ret = sdp_record_unregister(session, it->second->get_record());
-                if( ret == 0 ){
-                    // Mark service as registered
-                    _services[it->first]->set_registered(false);
-                }
-                else {
-                    std::cout <<  std::string(__func__) << " Service unregistration error. Err:" << std::to_string(ret) << std::endl;
-                }
-            }
-            else {
-                // This service registered already
-                std::cout <<  std::string(__func__) << " Unregistered already. Service: " << it->second->get_name() << std::endl;
-            }
-        }
-
-        sdp_close( session );
-        return true;
     }
 
     /*
     * Add service to the list
     */
     void add_service(const BleSevicePtr& service){
+        std::cout <<  std::string(__func__) << " Add service: " << ( (bool)service ? service->get_name() : " Unknown") << std::endl;
+
         auto item = _services.find(service->uuid());
         if( item == _services.end()){
             _services.emplace( std::make_pair(service->uuid(), service) );
         }
     }
 
+    /*
+    * Close connection
+    */
+    const bool close_connection() {
+        std::cout <<  std::string(__func__) << " Close session connection." << std::endl;
+        if( _session ){
+            sdp_close( _session );
+            _session = nullptr;
+        }
+    }
+
 private:
     sdp_session_t *_session = nullptr;
+    std::string _server_addr;
     std::map<uint32_t, BleSevicePtr> _services;
 
 };
