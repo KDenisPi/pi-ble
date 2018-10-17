@@ -224,6 +224,22 @@ public:
         return get_service_attribut(rec, SDP_ATTR_ICON_URL);
     }
 
+    inline const std::string get_service_uuid(const sdp_record_t *rec){
+        char UUID_str[MAX_LEN_UUID_STR];
+        std::string svc_uuid;
+        uuid_t uuid;
+
+        int res = sdp_get_service_id(rec, &uuid);
+        if( res >= 0 ){
+            res = sdp_uuid2strn(&uuid, UUID_str, MAX_LEN_UUID_STR);
+            if( res >= 0 ){
+                svc_uuid = UUID_str;
+            }
+        }
+
+        return svc_uuid;
+    }
+
     /*
     * Detect service parameters using SDP service
     *
@@ -276,7 +292,9 @@ public:
                 sdp_list_t *service_list;
                 sdp_list_t *proto_list;
 
-                std::cout << "**********************************" << std::endl << "Service Name: " << get_service_name(rec) << std::endl;
+                std::cout << "**********************************" << std::endl;
+                std::cout << "Service Name: " << get_service_name(rec) << std::endl;
+                std::cout << "Service UUID: " << get_service_uuid(rec) << std::endl;
                 std::cout << "Service Description: " << get_service_description(rec) << std::endl;
                 std::cout << "Service Provider: " << get_service_provider_name(rec) << std::endl;
 

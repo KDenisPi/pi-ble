@@ -21,7 +21,7 @@ int main (int argc, char* argv[])
 
   pi_ble::ble_lib::BleServer* bleServer = new pi_ble::ble_lib::BleServer();
   pi_ble::ble_lib::BleSevicePtr bleSvc = pi_ble::ble_lib::BleSevicePtr(
-      new pi_ble::ble_lib::BleService(0xAADD, "Weather Service", "Denis Kudia", "Weather service for Hoime")
+      new pi_ble::ble_lib::BleService(0x0000AADD, "Weather Service", "Denis Kudia", "Weather service for Hoime")
     );
 
   bleSvc->add_protocol_l2cap( 5001 ); // Use PSM port number 5001 (odd number)
