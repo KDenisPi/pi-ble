@@ -117,7 +117,6 @@ public:
     }
 
     bool prepare() {
-        uint32_t service_uuid_int[] = { 0, 0, 0, 0 };
         uuid_t root_uuid, l2cap_uuid, rfcomm_uuid, att_uuid, svc_uuid;
         _prepared = false;
 
@@ -127,8 +126,6 @@ public:
             return false;
         }
 
-        service_uuid_int[3] = _srv_uuid;
-
         _record = sdp_record_alloc();
         if( _record == NULL ){
             std::cout <<  std::string(__func__) << " Record allocation error. Err:" << std::to_string(errno) << std::endl;
@@ -136,7 +133,7 @@ public:
         }
 
         // set the general service ID
-        sdp_uuid128_create( &svc_uuid, &service_uuid_int );
+        sdp_uuid32_create( &svc_uuid, _srv_uuid );
         sdp_set_service_id( _record, svc_uuid );
 
         // make the service record publicly browsable
