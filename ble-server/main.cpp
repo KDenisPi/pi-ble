@@ -11,7 +11,13 @@ using namespace std;
 
 int main (int argc, char* argv[])
 {
-  std::cout <<  "BLE server" << std::endl;
+  std::cout <<  "BLE server [B8:27:EB:B9:F9:84]" << std::endl;
+
+  std::string server_addr; // = "B8:27:EB:B9:F9:84";
+
+  if(argc > 1){
+    server_addr = argv[1];
+  }
 
   pi_ble::ble_lib::BleServer* bleServer = new pi_ble::ble_lib::BleServer();
   pi_ble::ble_lib::BleSevicePtr bleSvc = pi_ble::ble_lib::BleSevicePtr(
@@ -26,14 +32,14 @@ int main (int argc, char* argv[])
     bleServer->add_service(bleSvc);
 
     std::cout <<  "BLE server. Registering services" << std::endl;
-    if( bleServer->sdp_register() ){
+    if( bleServer->sdp_register(server_addr) ){
         std::cout <<  "BLE server. Services registered" << std::endl;
 
         //wait for some time (check on client side that registration is visible)
         sleep( 20 );
 
         std::cout <<  "BLE server. Unregister services" << std::endl;
-        bleServer->sdp_unregister();
+        bleServer->sdp_unregister(server_addr);
     }
   }
 

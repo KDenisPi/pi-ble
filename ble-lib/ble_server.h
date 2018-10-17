@@ -323,14 +323,24 @@ public:
    /*
    * Register server on SDP
    *
+   *  Parameters: server_addr - server address or use local server instead
    */
-   virtual bool sdp_register() {
+   virtual bool sdp_register(const std::string server_addr) {
         bdaddr_t baddr_any = {0,0,0,0,0,0};
-        bdaddr_t baddr_local = {0, 0, 0, 0xff, 0xff, 0xff};
+        bdaddr_t baddr_target = {0, 0, 0, 0xff, 0xff, 0xff}; //local by default
         sdp_session_t *session = nullptr;
+        int ret = 0;
+
+        if( !server_addr.empty() ){
+            if( str2ba( server_addr.c_str(), &baddr_target ) < 0 ){
+                std::cout <<  std::string(__func__) << " Invalid server address." << std::endl;
+                //invalid address
+                return false;
+            }
+        }
 
         //Register all available services
-        session = sdp_connect( &baddr_any, &baddr_local, SDP_RETRY_IF_BUSY );
+        session = sdp_connect( &baddr_any, &baddr_target, SDP_RETRY_IF_BUSY );
         if( !session ){
             std::cout <<  std::string(__func__) << " Session connection error. Err:" << std::to_string(errno) << std::endl;
             // Failed print errno
@@ -340,7 +350,7 @@ public:
         for (auto it = _services.begin(); it != _services.end(); ++it) {
             std::cout <<  std::string(__func__) << " Register service: " << it->second->get_name() << std::endl;
             if(!it->second->is_registered()){
-                int ret = sdp_record_register(session, it->second->get_record(), 0);
+                ret = sdp_record_register(session, it->second->get_record(), 0);
                 if( ret == 0 ){
                     // Mark service as registered
                     _services[it->first]->set_registered(true);
@@ -364,13 +374,21 @@ public:
    * Un-Register all servers from SDP
    *
    */
-   virtual bool sdp_unregister() {
+   virtual bool sdp_unregister(const std::string server_addr) {
         bdaddr_t baddr_any = {0,0,0,0,0,0};
-        bdaddr_t baddr_local = {0, 0, 0, 0xff, 0xff, 0xff};
+        bdaddr_t baddr_target = {0, 0, 0, 0xff, 0xff, 0xff}; //local by default
         sdp_session_t *session = nullptr;
 
+        if( !server_addr.empty() ){
+            if( str2ba( server_addr.c_str(), &baddr_target ) < 0 ){
+                std::cout <<  std::string(__func__) << " Invalid server address." << std::endl;
+                //invalid address
+                return false;
+            }
+        }
+
         //Register all available services
-        session = sdp_connect( &baddr_any, &baddr_local, SDP_RETRY_IF_BUSY );
+        session = sdp_connect( &baddr_any, &baddr_target, SDP_RETRY_IF_BUSY );
         if( session == NULL ){
             std::cout <<  std::string(__func__) << " Session connection error. Err:" << std::to_string(errno) << std::endl;
             // Failed print errno
@@ -404,8 +422,8 @@ public:
     * Add service to the list
     */
     void add_service(const BleSevicePtr& service){
-        auto uuid = _services.find(service->uuid());
-        if( uuid != _services.end()){
+        auto item = _services.find(service->uuid());
+        if( item == _services.end()){
             _services.emplace( std::make_pair(service->uuid(), service) );
         }
     }
