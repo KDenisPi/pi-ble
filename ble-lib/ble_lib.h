@@ -245,7 +245,7 @@ public:
     *
     * TODO Service parameters will be added lated
     */
-   const bool detect_service_over_sdp(const std::string id, const uint16_t* services, int services_count){
+   const bool detect_service_over_sdp(const std::string id, const uint32_t* services, int services_count){
         uuid_t svc_uuid;
         bdaddr_t target, baddr_any = {0,0,0,0,0,0};
         sdp_list_t *response_list = NULL, *attrid_list = NULL;
@@ -266,8 +266,7 @@ public:
         if(services_count > 0){
             for(int i = 0; i < services_count; i++){
                 // specify the UUID of the application we're searching for
-                uint16_t class16 = services[i] & 0xffff;
-                sdp_uuid16_create(&svc_uuid, class16);
+                sdp_uuid16_create(&svc_uuid, services[i]);
                 search_list = sdp_list_append( search_list, &svc_uuid );
             }
         }
