@@ -13,15 +13,20 @@ using namespace std;
 
 int main (int argc, char* argv[])
 {
-  std::cout <<  "BLE FTP server" << std::endl;
+  uint16_t cmd_port = 20;
+
+  if(argc > 1){
+      cmd_port = std::atoi(argv[1]);
+  }
+
+  std::cout <<  "BLE FTP server port: " << std::to_string(cmd_port) << std::endl;
 
   logger::log_init("/var/log/pi-robot/ftpd_log");
 
-  pi_ble::ble_ftp::BleFtpServer ftpd(7000);
+  pi_ble::ble_ftp::BleFtpServer ftpd( cmd_port );
 
   ftpd.start();
   std::cout <<  "BLE FTP server, Started, Wait" << std::endl;
-
   ftpd.wait_for_finishing();
 
   std::cout <<  "BLE FTP server, Stopped" << std::endl;
