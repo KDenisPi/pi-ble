@@ -15,8 +15,7 @@
 #include <cstdio>
 #include <vector>
 
-namespace pi_ble {
-namespace ble_lib {
+#include "logger.h"
 
 #include <unistd.h>
 #include <sys/socket.h>
@@ -25,6 +24,10 @@ namespace ble_lib {
 #include <bluetooth/hci_lib.h>
 #include <bluetooth/sdp.h>
 #include <bluetooth/sdp_lib.h>
+
+
+namespace pi_ble {
+namespace ble_lib {
 
 class BleLib {
 public:
