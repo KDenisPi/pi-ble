@@ -29,6 +29,7 @@ enum CmdList {
     Cmd_Cdup,
     Cmd_Rmd,
     Cmd_Mkd,
+    Cmd_Dele, //delete file
     Cmd_Unknown,
     Cmd_Timeout,
     Cmd_Error
@@ -99,9 +100,17 @@ protected:
     //process PWD command
     virtual bool process_cmd_pwd() { return false; }
     //process CWD command
-    virtual bool process_cmd_cwd(const std::string& dpath) { return false; }
+    virtual bool process_cmd_cwd(const std::string& dpath, const std::string msg = "CWD") { return false; }
     //process LIST command
     virtual bool process_cmd_list( const std::string& ldir = "" ) { return false; }
+    //process CDUP command
+    virtual bool process_cmd_cdup() { return false; }
+    //process MKD command
+    virtual bool process_cmd_mkdir( const std::string& ldir) { return false; }
+    //process RMD command
+    virtual bool process_cmd_rmdir( const std::string& ldir) { return false; }
+    //process DELE command
+    virtual bool process_cmd_delete( const std::string& lfile) { return false; }
 
 
     // Service function
@@ -147,6 +156,12 @@ public:
 
     const std::string get_cmd_by_code(int cmd) {
         return  cmd_list[cmd];
+    }
+
+    bool  print_result_400_Bad_request(const std::string cmd) {
+        std::string result = prepare_result(400, cmd + " Bad request");
+        std::cout <<  result << std::endl;
+        return false;
     }
 };
 

@@ -20,7 +20,7 @@ namespace ble_ftp {
 
 const char TAG[] = "ftplib";
 
-std::string BleFtp::cmd_list[] = { "LIST", "HELP", "QUIT", "PWD", "CWD", "CDUP", "RMD", "MKD", "EOF" };
+std::string BleFtp::cmd_list[] = { "LIST", "HELP", "QUIT", "PWD", "CWD", "CDUP", "RMD", "MKD", "DELE", "EOF" };
 
 //connect socket
 bool BleFtp::initialize(){
@@ -210,8 +210,8 @@ bool BleFtp::cmd_send(const CmdList cmd, const std::string& parameters) {
 bool BleFtp::cmd_process_response(){
     std::string result;
     int fd = get_cmd_socket();
-    int res = read_data( fd, result);
 
+    int res = read_data( fd, result);
     if( res <= 0 ){
         result = prepare_result(500, "Internal error");
     }

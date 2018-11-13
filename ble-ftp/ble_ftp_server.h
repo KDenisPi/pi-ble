@@ -78,17 +78,19 @@ public:
     }
 
     //process CWD command
-    virtual bool process_cmd_cwd(const std::string& dpath) override {
+    virtual bool process_cmd_cwd(const std::string& dpath, const std::string msg = "CWD") override {
         logger::log(logger::LLOG::DEBUG, "ftpd", std::string(__func__) + " [" + dpath + "]");
+
         std::string response;
-
-        response = prepare_result(500, "CWD Failed");
-
+        response = prepare_result(500, msg + " Failed");
         if(!dpath.empty()){
             if( piutils::chkfile(dpath)){
                 set_curr_dir( dpath );
-                response = prepare_result(200, "CWD Set current directory to \"" + _current_dir + "\"");
+                response = prepare_result(200, msg + " Set current directory to \"" + _current_dir + "\"");
             }
+        }
+        else{
+            response = prepare_result(400, msg + " Directory name is empty.");
         }
 
         return  write_data( get_cmd_socket(), response.c_str(), response.length());
@@ -112,6 +114,90 @@ public:
 
         return  write_data( get_cmd_socket(), response.c_str(), response.length());
     }
+
+
+    /*
+    * process CDUP command
+    */
+    virtual bool process_cmd_cdup() override {
+        const std::string response = prepare_result(200, "CDUP Current directory \"" + _current_dir + "\"");
+        size_t off = _current_dir.rfind('/', _current_dir.length());
+        if( off == 0 ) // root folder - no parent
+        {
+            std::string response = prepare_result(400, "CDUP No parent directory");
+            return  write_data( get_cmd_socket(), response.c_str(), response.length());
+        }
+
+        return process_cmd_cwd( _current_dir.substr(0, off), "CDUP");
+    }
+
+    /*
+    * process MKD command
+    */
+    virtual bool process_cmd_mkdir( const std::string& ldir ) override {
+        logger::log(logger::LLOG::DEBUG, "ftpd", std::string(__func__) + " MKD [" + ldir + "]");
+
+        std::string response;
+        if(!ldir.empty()){
+            int res = mkdir( ldir.c_str(), S_IWUSR|S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH );
+            if( res == 0 || (res == -1 && errno == EEXIST)){
+                response = prepare_result(200, "MKD Directory \"" + ldir + "\" created");
+            }
+            else
+                response = prepare_result(500, "MKD Failed Error: " + std::to_string(errno));
+        }
+        else {
+            response = prepare_result(400, "MKD  Directory name is empty.");
+        }
+
+        return  write_data( get_cmd_socket(), response.c_str(), response.length());
+    }
+
+    /*
+    * process RMD command
+    */
+    virtual bool process_cmd_rmdir( const std::string& ldir ) override {
+        logger::log(logger::LLOG::DEBUG, "ftpd", std::string(__func__) + " RMD [" + ldir + "]");
+
+        std::string response;
+        if(!ldir.empty()){
+            int res = rmdir( ldir.c_str() );
+            if( res == 0 ){
+                response = prepare_result(200, "RMD Directory \"" + ldir + "\" removed");
+            }
+            else
+                response = prepare_result(500, "RMD Failed Error: " + std::to_string(errno));
+        }
+        else {
+            response = prepare_result(400, "RMD  Directory name is empty.");
+        }
+
+        return  write_data( get_cmd_socket(), response.c_str(), response.length());
+    }
+
+    /*
+    * process DELE command
+    */
+    virtual bool process_cmd_delete( const std::string& lfile) override {
+        logger::log(logger::LLOG::DEBUG, "ftpd", std::string(__func__) + " DELE [" + lfile + "]");
+
+        std::string response;
+        if(!lfile.empty()){
+            int res = remove( lfile.c_str() );
+            if( res == 0 ){
+                response = prepare_result(200, "DELE File \"" + lfile + "\" deleted");
+            }
+            else
+                response = prepare_result(500, "DELE Failed Error: " + std::to_string(errno));
+        }
+        else {
+            response = prepare_result(400, "DELE  Filename name is empty.");
+        }
+
+        return  write_data( get_cmd_socket(), response.c_str(), response.length());
+    }
+
+
 
     //service function
     virtual bool check_stop_signal() override {

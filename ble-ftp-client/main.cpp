@@ -26,11 +26,14 @@ int main (int argc, char* argv[])
   if( bleClient.connect_to("127.0.0.1", 7000)){
     std::cout <<  "Connected" << std::endl;
 
-    bleClient.process_cmd_help();
-    bleClient.process_cmd_pwd();
-    bleClient.process_cmd_list();
-    bleClient.process_cmd_cwd("/var/log/pi-robot");
-    bleClient.process_cmd_list();
+    //bleClient.process_cmd_help();
+    //bleClient.process_cmd_pwd();
+    //bleClient.process_cmd_cdup();
+    //bleClient.process_cmd_cwd("/var/log/pi-robot");
+    //bleClient.process_cmd_mkdir("/var/log/pi-robot/denis");
+    //bleClient.process_cmd_list();
+    bleClient.process_cmd_rmdir("/var/log/pi-robot/denis");
+    bleClient.process_cmd_delete("/var/log/pi-robot/ftpcl_log_2018-11-08_16-52");
 
     sleep(1);
 
