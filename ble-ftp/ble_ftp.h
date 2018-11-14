@@ -11,6 +11,7 @@
 #define BLE_FTP_COMMON_H
 
 #include "logger.h"
+#include "smallthings.h"
 
 #include "ble_lib.h"
 #include "ble_ftp_cmd.h"
@@ -36,6 +37,8 @@ enum CmdList {
 };
 
 #define MAX_CMD_BUFFER_LENGTH   4096
+
+using CmdInfo = std::pair<CmdList, std::string>;
 
 class BleFtp : public BleFtpCommand
 {
@@ -146,6 +149,32 @@ protected:
     int wait_for_descriptor(int fd, const uint8_t wait_for, const int wait_interval = 1, const bool break_if_timeout = false);
 
 public:
+    /*
+    * Recognize received connamd
+    */
+   const CmdInfo recognize_cmd(const std::string& command){
+        CmdList cmd = CmdList::Cmd_Unknown;
+        std::string parameters;
+
+        //recognize received command
+        int idx = 0;
+        while(get_cmd_by_code(idx).compare("EOF") != 0){
+            std::string::size_type pos = command.rfind(get_cmd_by_code(idx));
+            if(pos == 0 ){
+                cmd = (CmdList) idx;
+
+                parameters = command.substr(get_cmd_by_code(idx).length());
+                parameters = piutils::trim( parameters );
+
+                logger::log(logger::LLOG::DEBUG, "BleFtp", std::string(__func__) + " CMD: " + std::to_string(cmd) + " [" + parameters + "]");
+                break;
+            }
+            idx++;
+        }
+
+        return std::make_pair(cmd, parameters);
+   }
+
     //Send command to server
     bool cmd_send(const CmdList cmd, const std::string& parameters = "");
     bool cmd_process_response();

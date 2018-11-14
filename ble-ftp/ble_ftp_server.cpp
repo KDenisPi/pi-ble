@@ -27,8 +27,11 @@ std::string BleFtpServer::helpText = "Commands list:\n\
     PWD  - print current server directory\n\
     CWD  - change current server directory\n\
     CDUP - change current server diectory to parent\n\
-    GET  - download file from server\n\
-    PUT  - upload file from server;\n";
+    DELE - delete file\n\
+    MKD  - make directory\n\
+    RMD  - remove directory\n\
+    RETR - download file from server\n\
+    STOR - upload file from server;\n";
 
 /*
 *
@@ -212,12 +215,10 @@ void BleFtpServer::worker(BleFtpServer* owner){
 const CmdInfo BleFtpServer::cmd_receive()
 {
     CmdList cmd = CmdList::Cmd_Unknown;
-    std::string parameters;
-    int idx = 0;
 
     int fd = get_cmd_socket();
 
-    int res =  wait_for_descriptor(fd, WAIT_READ, 10, true);
+    int res =  wait_for_descriptor(fd, WAIT_READ, 60, true);
     if( res < 0 ){
         logger::log(logger::LLOG::DEBUG, TAG, std::string(__func__) + " Wait_for_descriptor error or Stop signal detected");
         return std::make_pair(cmd, "");
@@ -236,22 +237,7 @@ const CmdInfo BleFtpServer::cmd_receive()
 
     logger::log(logger::LLOG::DEBUG, TAG, std::string(__func__) + " Received: Bytes " + std::to_string(command.length()) + " [" + command + "]");
 
-    //recognize received command
-    while(get_cmd_by_code(idx).compare("EOF") != 0){
-        std::string::size_type pos = command.rfind(get_cmd_by_code(idx));
-        if(pos == 0 ){
-            cmd = (CmdList) idx;
-
-            parameters = command.substr(get_cmd_by_code(idx).length());
-            parameters = piutils::trim( parameters );
-
-            logger::log(logger::LLOG::DEBUG, TAG, std::string(__func__) + " CMD: " + std::to_string(cmd) + " [" + parameters + "]");
-            break;
-        }
-        idx++;
-    }
-
-    return std::make_pair(cmd, parameters);
+    return recognize_cmd(command);
 }
 
 }

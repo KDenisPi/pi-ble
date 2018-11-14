@@ -67,8 +67,8 @@ bool BleFtp::prepare(){
     memset(&addr_loc, 0, sizeof(addr_loc));
 
     addr_loc.sin_family = AF_INET;
-    //addr_loc.sin_addr.s_addr = INADDR_ANY;
-    inet_pton(AF_INET, "127.0.0.1", &addr_loc.sin_addr);
+    addr_loc.sin_addr.s_addr = INADDR_ANY;
+    //inet_pton(AF_INET, "127.0.0.1", &addr_loc.sin_addr);
     addr_loc.sin_port = htons(get_cmd_channel());
 #else
     struct sockaddr_rc addr_loc = { 0 };

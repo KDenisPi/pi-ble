@@ -20,8 +20,6 @@
 namespace pi_ble {
 namespace ble_ftp {
 
-using CmdInfo = std::pair<CmdList, std::string>;
-
 class BleFtpServer : public BleFtp, public piutils::Threaded
 {
 

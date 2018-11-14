@@ -25,7 +25,7 @@ int main (int argc, char* argv[])
   ftpd.wait_for_finishing();
 
   std::cout <<  "BLE FTP server, Stopped" << std::endl;
-  sleep(3);
+  sleep(1);
 
   exit(EXIT_SUCCESS);
 }
