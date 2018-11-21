@@ -64,6 +64,8 @@ bool BleFtp::prepare(){
     socklen_t addrlen;
 
 #ifdef USE_NET_INSTEAD_BLE
+    char addr[64];
+
     struct sockaddr_in addr_loc;
     memset(&addr_loc, 0, sizeof(addr_loc));
 
@@ -72,6 +74,8 @@ bool BleFtp::prepare(){
     //inet_pton(AF_INET, "127.0.0.1", &addr_loc.sin_addr);
     addr_loc.sin_port = htons(get_cmd_channel());
 #else
+    char addr[1024];
+
     struct sockaddr_rc addr_loc = { 0 };
     bdaddr_t baddr_any = {0,0,0,0,0,0};
     memset(&addr_loc, 0, sizeof(addr_loc));
@@ -80,6 +84,8 @@ bool BleFtp::prepare(){
     addr_loc.rc_bdaddr = baddr_any;
     addr_loc.rc_channel = (uint8_t) get_cmd_channel();
 
+    ba2str( &addr_loc.rc_bdaddr, addr );
+    logger::log(logger::LLOG::DEBUG, TAG, std::string(__func__) + " Before bind: " + addr +  " Channel: " + std::to_string(addr_loc.rc_channel) + " Socket:" + std::to_string(_sock_cmd));
 #endif
 
     addrlen = sizeof(addr_loc);
@@ -103,13 +109,14 @@ bool BleFtp::prepare(){
     }
 
     addrlen = sizeof(addr_loc);
-    getsockname( _sock_cmd, (struct sockaddr *)&addr_loc, &addrlen);
+    res = getsockname( _sock_cmd, (struct sockaddr *)&addr_loc, &addrlen);
+    if( res  <  0 ){
+        logger::log(logger::LLOG::ERROR, TAG, std::string(__func__) + " Getsockname failed: " + std::to_string(errno));
+    }
 #ifdef USE_NET_INSTEAD_BLE
-    char addr[64];
     inet_ntop(AF_INET, (const char*)&addr_loc.sin_addr, addr, sizeof(addr));
     logger::log(logger::LLOG::DEBUG, TAG, std::string(__func__) + " Finished successfully: " + addr +  " Port: " + std::to_string(ntohs(addr_loc.sin_port)) + " Socket:" + std::to_string(_sock_cmd));
 #else
-    char addr[1024];
     ba2str( &addr_loc.rc_bdaddr, addr );
     logger::log(logger::LLOG::DEBUG, TAG, std::string(__func__) + " Finished successfully: " + addr +  " Channel: " + std::to_string(addr_loc.rc_channel) + " Socket:" + std::to_string(_sock_cmd));
 #endif
