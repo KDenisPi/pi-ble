@@ -37,6 +37,8 @@ std::string BleFtpServer::helpText = "Commands list:\n\
 *
 */
 bool BleFtpServer::wait_for_connection(){
+    logger::log(logger::LLOG::DEBUG, TAG, std::string(__func__));
+
     socklen_t addrlen;
 #ifdef USE_NET_INSTEAD_BLE
     struct sockaddr_in addr_rem = { 0 };

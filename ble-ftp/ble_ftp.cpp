@@ -62,6 +62,7 @@ bool BleFtp::prepare(){
 
     int res;
     socklen_t addrlen;
+
 #ifdef USE_NET_INSTEAD_BLE
     struct sockaddr_in addr_loc;
     memset(&addr_loc, 0, sizeof(addr_loc));
@@ -80,6 +81,7 @@ bool BleFtp::prepare(){
     addr_loc.rc_channel = (uint8_t) get_cmd_channel();
 
 #endif
+
     addrlen = sizeof(addr_loc);
     res = bind( _sock_cmd, (struct sockaddr *)&addr_loc, sizeof(addr_loc));
 
@@ -100,7 +102,17 @@ bool BleFtp::prepare(){
         }
     }
 
-    logger::log(logger::LLOG::DEBUG, TAG, std::string(__func__) + " finished successfully");
+    addrlen = sizeof(addr_loc);
+    getsockname( _sock_cmd, (struct sockaddr *)&addr_loc, &addrlen);
+#ifdef USE_NET_INSTEAD_BLE
+    char addr[64];
+    inet_ntop(AF_INET, (const char*)&addr_loc.sin_addr, addr, sizeof(addr));
+#else
+    char addr[1024];
+    ba2str( &addr_loc.rc_bdaddr, addr );
+#endif
+
+    logger::log(logger::LLOG::DEBUG, TAG, std::string(__func__) + " Finished successfully: " + addr + " Socket:" + std::to_string(_sock_cmd));
     return true;
 }
 
