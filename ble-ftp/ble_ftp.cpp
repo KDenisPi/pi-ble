@@ -107,12 +107,13 @@ bool BleFtp::prepare(){
 #ifdef USE_NET_INSTEAD_BLE
     char addr[64];
     inet_ntop(AF_INET, (const char*)&addr_loc.sin_addr, addr, sizeof(addr));
+    logger::log(logger::LLOG::DEBUG, TAG, std::string(__func__) + " Finished successfully: " + addr +  " Port: " + std::to_string(ntohs(addr_loc.sin_port)) + " Socket:" + std::to_string(_sock_cmd));
 #else
     char addr[1024];
     ba2str( &addr_loc.rc_bdaddr, addr );
+    logger::log(logger::LLOG::DEBUG, TAG, std::string(__func__) + " Finished successfully: " + addr +  " Channel: " + std::to_string(addr_loc.rc_channel) + " Socket:" + std::to_string(_sock_cmd));
 #endif
 
-    logger::log(logger::LLOG::DEBUG, TAG, std::string(__func__) + " Finished successfully: " + addr + " Socket:" + std::to_string(_sock_cmd));
     return true;
 }
 
