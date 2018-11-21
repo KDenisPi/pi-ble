@@ -22,8 +22,11 @@ int main (int argc, char* argv[])
   }
 
   pi_ble::ble_ftp::BleFtpClient bleClient;
+  uint16_t port = std::stoi(argv[2]);
+  std::cout <<  "Connecting Addr: " << argv[1] << " Port:" << argv[2] << std::endl;
 
-  if( bleClient.connect_to("127.0.0.1", 7000)){
+
+  if( bleClient.connect_to(argv[1], port)){
     std::cout <<  "Connected" << std::endl;
 
     std::string command;
@@ -66,6 +69,9 @@ int main (int argc, char* argv[])
           std::cout << "Unknown command" << endl;
       }
     }
+  }
+  else {
+    std::cout <<  "Connection failed" << std::endl;
   }
 
   bleClient.close_socket();
