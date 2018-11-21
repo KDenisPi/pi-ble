@@ -13,9 +13,11 @@
 #include <thread>
 #include <memory>
 
-#include "ble_ftp.h"
 #include "Threaded.h"
 #include "smallthings.h"
+
+#include "ble_ftp.h"
+#include "ble_ftp_file_snd_rcv.h"
 
 namespace pi_ble {
 namespace ble_ftp {
@@ -219,6 +221,7 @@ protected:
     virtual int get_cmd_socket() {
         return _sock_client;
     }
+
 
     /*
     * Currnet directory

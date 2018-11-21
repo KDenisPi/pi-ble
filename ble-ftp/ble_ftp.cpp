@@ -20,7 +20,7 @@ namespace ble_ftp {
 
 const char TAG[] = "ftplib";
 
-std::string BleFtp::cmd_list[] = { "LIST", "HELP", "QUIT", "PWD", "CWD", "CDUP", "RMD", "MKD", "DELE", "EOF" };
+std::string BleFtpCommand::cmd_list[] = { "LIST", "HELP", "QUIT", "PWD", "CWD", "CDUP", "RMD", "MKD", "DELE", "EOF" };
 
 //connect socket
 bool BleFtp::initialize(){
