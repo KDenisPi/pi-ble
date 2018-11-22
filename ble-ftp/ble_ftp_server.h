@@ -22,7 +22,7 @@
 namespace pi_ble {
 namespace ble_ftp {
 
-class BleFtpServer : public BleFtp, public piutils::Threaded
+class BleFtpServer : public BleFtp, public BleFtpCommand, public piutils::Threaded
 {
 
 public:

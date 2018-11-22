@@ -39,34 +39,12 @@ std::string BleFtpServer::helpText = "Commands list:\n\
 bool BleFtpServer::wait_for_connection(){
     logger::log(logger::LLOG::DEBUG, TAG, std::string(__func__));
 
-    socklen_t addrlen;
-#ifdef USE_NET_INSTEAD_BLE
-    struct sockaddr_in addr_rem = { 0 };
-#else
-    struct sockaddr_rc addr_rem;
-    memset(&addr_rem, 0, sizeof(addr_rem));
-#endif
-    addrlen = sizeof(addr_rem);
-
-    if( wait_for_descriptor(_sock_cmd, WAIT_READ) <= 0 ){
-        return false;
-    }
-
-    _sock_client = accept( _sock_cmd, (struct sockaddr *)&addr_rem, &addrlen );
+    _sock_client = wait_connection();
     if( _sock_client < 0 ){
         logger::log(logger::LLOG::ERROR, TAG, std::string(__func__) + " Accept failed: " + std::to_string(errno));
         return false;
     }
 
-#ifdef USE_NET_INSTEAD_BLE
-    char addr[64];
-    inet_ntop(AF_INET, (const char*)&addr_rem.sin_addr, addr, sizeof(addr));
-#else
-    char addr[1024];
-    ba2str( &addr_rem.rc_bdaddr, addr );
-#endif
-
-    logger::log(logger::LLOG::DEBUG, TAG, std::string(__func__) + " Accept from: " + addr + " Socket:" + std::to_string(_sock_client));
     return true;
 }
 

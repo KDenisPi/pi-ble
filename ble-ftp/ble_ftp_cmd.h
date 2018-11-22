@@ -10,6 +10,9 @@
 #ifndef BLE_FTP_CMD_H
 #define BLE_FTP_CMD_H
 
+#include "logger.h"
+#include "smallthings.h"
+
 namespace pi_ble {
 namespace ble_ftp {
 
@@ -37,6 +40,9 @@ enum CmdList {
     Cmd_Timeout,
     Cmd_Error
 };
+
+#define MAX_CMD_BUFFER_LENGTH   4096
+using CmdInfo = std::pair<CmdList, std::string>;
 
 /*
 *
@@ -77,6 +83,37 @@ protected:
     //process DELE command
     virtual bool process_cmd_delete( const std::string& lfile) { return false; }
 
+public:
+    static const std::string get_cmd_by_code(int cmd) {
+        return  cmd_list[cmd];
+    }
+
+public:
+    /*
+    * Recognize received connamd
+    */
+   const CmdInfo recognize_cmd(const std::string& command){
+        CmdList cmd = CmdList::Cmd_Unknown;
+        std::string parameters;
+
+        //recognize received command
+        int idx = 0;
+        while(get_cmd_by_code(idx).compare("EOF") != 0){
+            std::string::size_type pos = command.rfind(get_cmd_by_code(idx));
+            if(pos == 0 ){
+                cmd = (CmdList) idx;
+
+                parameters = command.substr(get_cmd_by_code(idx).length());
+                parameters = piutils::trim( parameters );
+
+                logger::log(logger::LLOG::DEBUG, "BleFtp", std::string(__func__) + " CMD: " + std::to_string(cmd) + " [" + parameters + "]");
+                break;
+            }
+            idx++;
+        }
+
+        return std::make_pair(cmd, parameters);
+   }
 
 private:
     BleFtpStates _state;

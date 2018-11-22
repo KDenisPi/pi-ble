@@ -16,7 +16,7 @@
 namespace pi_ble {
 namespace ble_ftp {
 
-class BleFtpClient : public BleFtp
+class BleFtpClient : public BleFtp, public BleFtpCommand
 {
 
 public:

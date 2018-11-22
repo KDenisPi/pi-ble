@@ -57,6 +57,44 @@ bool BleFtp::close_socket(){
 /*
 *
 */
+int BleFtp::wait_connection(const uint8_t wait_for, const int wait_interval, const bool break_if_timeout){
+    logger::log(logger::LLOG::DEBUG, TAG, std::string(__func__));
+
+    socklen_t addrlen;
+#ifdef USE_NET_INSTEAD_BLE
+    struct sockaddr_in addr_rem = { 0 };
+#else
+    struct sockaddr_rc addr_rem;
+    memset(&addr_rem, 0, sizeof(addr_rem));
+#endif
+    addrlen = sizeof(addr_rem);
+
+    if( wait_for_descriptor(_sock_cmd, wait_for, wait_interval, break_if_timeout) <= 0 ){
+        return -1;
+    }
+
+    int sock = accept( _sock_cmd, (struct sockaddr *)&addr_rem, &addrlen );
+    if( sock < 0 ){
+        logger::log(logger::LLOG::ERROR, TAG, std::string(__func__) + " Accept failed: " + std::to_string(errno));
+        return sock;
+    }
+
+#ifdef USE_NET_INSTEAD_BLE
+    char addr[64];
+    inet_ntop(AF_INET, (const char*)&addr_rem.sin_addr, addr, sizeof(addr));
+#else
+    char addr[1024];
+    ba2str( &addr_rem.rc_bdaddr, addr );
+#endif
+
+    logger::log(logger::LLOG::DEBUG, TAG, std::string(__func__) + " Accept from: " + addr + " Socket:" + std::to_string(sock));
+    return sock;
+}
+
+
+/*
+*
+*/
 bool BleFtp::prepare(){
     logger::log(logger::LLOG::DEBUG, TAG, std::string(__func__) + " Started");
 
@@ -72,7 +110,7 @@ bool BleFtp::prepare(){
     addr_loc.sin_family = AF_INET;
     addr_loc.sin_addr.s_addr = INADDR_ANY;
     //inet_pton(AF_INET, "127.0.0.1", &addr_loc.sin_addr);
-    addr_loc.sin_port = htons(get_cmd_channel());
+    addr_loc.sin_port = htons(get_channel());
 #else
     char addr[1024];
 
@@ -82,7 +120,7 @@ bool BleFtp::prepare(){
 
     addr_loc.rc_family = AF_BLUETOOTH;
     addr_loc.rc_bdaddr = baddr_any;
-    addr_loc.rc_channel = (uint8_t) get_cmd_channel();
+    addr_loc.rc_channel = (uint8_t) get_channel();
 
     ba2str( &addr_loc.rc_bdaddr, addr );
     logger::log(logger::LLOG::DEBUG, TAG, std::string(__func__) + " Before bind: " + addr +  " Channel: " + std::to_string(addr_loc.rc_channel) + " Socket:" + std::to_string(_sock_cmd));
@@ -99,13 +137,10 @@ bool BleFtp::prepare(){
         logger::log(logger::LLOG::DEBUG, TAG, std::string(__func__) + " Bind successfull");
 
 
-    if(!is_server()){
-
-        res = listen( _sock_cmd, 1);
-        if( res < 0 ){
-            logger::log(logger::LLOG::ERROR, TAG, std::string(__func__) + " Listen failed: " + std::to_string(errno));
-            return false;
-        }
+    res = listen( _sock_cmd, 1);
+    if( res < 0 ){
+        logger::log(logger::LLOG::ERROR, TAG, std::string(__func__) + " Listen failed: " + std::to_string(errno));
+        return false;
     }
 
     addrlen = sizeof(addr_loc);
@@ -129,7 +164,7 @@ bool BleFtp::prepare(){
 *
 *  Parameters: remote address, remote channel
 */
-bool  BleFtp::connect_to(const std::string daddress, const uint16_t dchannel){
+int  BleFtp::connect_to(const std::string daddress, const uint16_t dchannel){
 
 #ifdef USE_NET_INSTEAD_BLE
     struct sockaddr_in addr_rem;
@@ -149,10 +184,10 @@ bool  BleFtp::connect_to(const std::string daddress, const uint16_t dchannel){
     int res = connect( _sock_cmd, (const struct sockaddr *)&addr_rem, sizeof(addr_rem) );
     if( res < 0 ){
         logger::log(logger::LLOG::ERROR, TAG, std::string(__func__) + " Connection failed: " + std::to_string(errno));
-        return false;
+        return -1;
     }
 
-    return true;
+    return _sock_cmd;
 }
 
 /*
@@ -217,9 +252,9 @@ int BleFtp::read_data(const int fd, std::string& result){
 bool BleFtp::cmd_send(const CmdList cmd, const std::string& parameters) {
     std::string commd;
     if(parameters.empty())
-        commd = get_cmd_by_code( cmd );
+        commd = BleFtpCommand::get_cmd_by_code( cmd );
     else
-        commd = get_cmd_by_code( cmd ) + " " + parameters;
+        commd = BleFtpCommand::get_cmd_by_code( cmd ) + " " + parameters;
 
     return  write_data( get_cmd_socket(), commd.c_str(), commd.length());
 }
@@ -285,10 +320,6 @@ int BleFtp::wait_for_descriptor(int fd, const uint8_t wait_for, const int wait_i
 
         logger::log(logger::LLOG::DEBUG, TAG, std::string(__func__) + " Ready for: " + (FD_ISSET(fd, &readfds) ? "Read " : "") +
                 + (FD_ISSET(fd, &writefds) ? "Write" : "") + " Res: " + std::to_string(res));
-/*
-        std::cout <<  std::string(__func__) + " Ready for: " + (FD_ISSET(fd, &readfds) ? "Read " : "") +
-                + (FD_ISSET(fd, &writefds) ? "Write" : "") + " Res: " + std::to_string(res) + " Timeout: " + std::to_string(wait_interval) << std::endl;
-*/
         break;
     }
 
