@@ -30,14 +30,14 @@ public:
     * Constructor
     */
     BleFtp(const uint16_t port, const bool is_server) : _port(port), _sock_cmd(0), _server(is_server) {
-
+        logger::log(logger::LLOG::DEBUG, "BleFtp", std::string(__func__) + " Is server: " + (is_server ? "true " : "false ") + " Port: " + std::to_string(port));
     }
 
     /*
     * Destructor
     */
     virtual ~BleFtp() {
-
+        close_socket();
     }
 
     //initialize socket
@@ -65,7 +65,7 @@ public:
     int wait_connection(const uint8_t wait_for = WAIT_READ, const int wait_interval = 1, const bool break_if_timeout = false);
 
 protected:
-    uint16_t _port;  //FTP command port number
+    uint16_t _port;   //server command port number
 
     int _sock_cmd;
     bool _server; //USe blocking of non blocking connection

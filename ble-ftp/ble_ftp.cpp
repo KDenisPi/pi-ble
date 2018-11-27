@@ -313,6 +313,7 @@ int BleFtp::wait_for_descriptor(int fd, const uint8_t wait_for, const int wait_i
         }
         else if( res == 0 ){ //timeout
             if( break_if_timeout ){
+                logger::log(logger::LLOG::DEBUG, TAG, std::string(__func__) + " 0 Timeout detected");
                 return 0;
             }
             continue;

@@ -10,8 +10,10 @@
 #ifndef BLE_FTP_CLIENT_H
 #define BLE_FTP_CLIENT_H
 
-#include "ble_ftp.h"
 #include "logger.h"
+
+#include "ble_ftp.h"
+#include "ble_ftp_file_snd_rcv.h"
 
 namespace pi_ble {
 namespace ble_ftp {
@@ -23,7 +25,7 @@ public:
     /*
     * Constructor
     */
-    BleFtpClient(const uint16_t port_cmd = 0) : BleFtp(port_cmd, true) {
+    BleFtpClient(const uint16_t port_cmd) : BleFtp(port_cmd, false) {
         initialize();
     }
 
@@ -128,6 +130,11 @@ private:
         }
         return res;
     }
+
+    /*
+    * Send receive file object
+    */
+    std::shared_ptr<BleFtpFile> _pfile;
 
 };
 

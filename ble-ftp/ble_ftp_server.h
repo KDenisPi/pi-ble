@@ -238,6 +238,11 @@ protected:
 private:
     std::string _current_dir;
 
+    /*
+    * Send receive file object
+    */
+    std::shared_ptr<BleFtpFile> _pfile;
+
 public:
     //Receive CMD result
     const CmdInfo cmd_receive();
