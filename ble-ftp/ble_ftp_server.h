@@ -29,8 +29,9 @@ public:
     /*
     * Constructor
     */
-    BleFtpServer(const uint16_t port_cmd) : BleFtp(port_cmd, false), _current_dir("/var/log") {
-
+    BleFtpServer(const uint16_t port_cmd) : BleFtp(port_cmd, false) {
+        set_curr_dir("/var/log");
+        _pfile = std::shared_ptr<BleFtpFile>(new BleFtpFile(true, port_cmd+1));
     }
 
     /*
@@ -73,7 +74,7 @@ public:
     * process PWD command
     */
     virtual bool process_cmd_pwd() override {
-        const std::string response = prepare_result(200, "PWD Current directory \"" + _current_dir + "\"");
+        const std::string response = prepare_result(200, "PWD Current directory \"" + get_curr_dir() + "\"");
         return  write_data( get_cmd_socket(), response.c_str(), response.length());
     }
 
@@ -86,7 +87,7 @@ public:
         if(!dpath.empty()){
             if( piutils::chkfile(dpath)){
                 set_curr_dir( dpath );
-                response = prepare_result(200, msg + " Set current directory to \"" + _current_dir + "\"");
+                response = prepare_result(200, msg + " Set current directory to \"" + get_curr_dir() + "\"");
             }
         }
         else{
@@ -222,22 +223,7 @@ protected:
         return _sock_client;
     }
 
-
-    /*
-    * Currnet directory
-    */
-    const std::string get_curr_dir() const {
-        return _current_dir;
-    }
-
-    void set_curr_dir( const std::string current_dir ){
-        _current_dir = current_dir;
-    }
-
-
 private:
-    std::string _current_dir;
-
     /*
     * Send receive file object
     */

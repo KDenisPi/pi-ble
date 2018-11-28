@@ -20,7 +20,7 @@ namespace ble_ftp {
 
 const char TAG[] = "ftplib";
 
-std::string BleFtpCommand::cmd_list[] = { "LIST", "HELP", "QUIT", "PWD", "CWD", "CDUP", "RMD", "MKD", "DELE", "EOF" };
+std::string BleFtpCommand::cmd_list[] = { "LIST", "HELP", "QUIT", "PWD", "CWD", "CDUP", "RMD", "MKD", "DELE", "RETR", "STOR", "EOF" };
 
 //connect socket
 bool BleFtp::initialize(){
@@ -272,6 +272,17 @@ bool BleFtp::cmd_process_response(){
     }
 
     std::cout <<  result << std::endl;
+
+    std::string::size_type pos = result.find("4");
+    if(pos == 0 ){
+        res = 0; //4xx string is present on answer
+    }
+    else {
+        pos = result.find("5");
+        if(pos == 0 ){
+            res = 0; //5xx string is present on answer
+        }
+    }
     return ( res > 0 );
 }
 

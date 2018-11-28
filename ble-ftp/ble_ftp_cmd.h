@@ -36,6 +36,8 @@ enum CmdList {
     Cmd_Rmd,
     Cmd_Mkd,
     Cmd_Dele, //delete file
+    Cmd_Retr, //Download file from server
+    Cmd_Stor, //Upload file to server
     Cmd_Unknown,
     Cmd_Timeout,
     Cmd_Error
@@ -82,6 +84,10 @@ protected:
     virtual bool process_cmd_rmdir( const std::string& ldir) { return false; }
     //process DELE command
     virtual bool process_cmd_delete( const std::string& lfile) { return false; }
+    //process RETR command
+    virtual bool process_cmd_download( const std::string& lfile) { return false; }
+    //process STOR command
+    virtual bool process_cmd_upload( const std::string& lfile) { return false; }
 
 public:
     static const std::string get_cmd_by_code(int cmd) {

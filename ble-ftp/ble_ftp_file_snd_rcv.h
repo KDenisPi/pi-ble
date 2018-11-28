@@ -11,6 +11,7 @@
 #define BLE_FTP_FILE_SND_RCV_H
 
 #include <string>
+#include <functional>
 
 namespace pi_ble {
 namespace ble_ftp {
@@ -61,6 +62,8 @@ public:
 
         fd_close();
     }
+
+    std::function<void(std::string&)> finish_callback;
 
     //
     bool start(){
@@ -123,14 +126,23 @@ public:
         /*
         * Send / receive data here
         */
+        std::string result;
         if( _nd > 0 ){
-            if( is_receiver() )
+            if( is_receiver() ){
                 res = fsend_receive( _nd, _fd ); //Receiver: read from network and write to file
-            else
+            }
+            else{
                 res = fsend_receive( _fd, _nd ); //Sender: Read from file and write to network
+            }
         }
         else {
+            result = "500 Socket error or timeout detected";
             logger::log(logger::LLOG::ERROR, "SndRcv", std::string(__func__) + " Socket error or timeout detected");
+        }
+
+        if( this->finish_callback ){
+            result = std::string("200 File successfully") + (is_receiver() ? " received" : "sent");
+            this->finish_callback(result);
         }
 
         // close descriptors

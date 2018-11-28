@@ -27,6 +27,11 @@ public:
     */
     BleFtpClient(const uint16_t port_cmd) : BleFtp(port_cmd, false) {
         initialize();
+
+        set_curr_dir("~/Downloads");
+
+        _pfile = std::shared_ptr<BleFtpFile>(new BleFtpFile(false, port_cmd+1));
+        _pfile->finish_callback = std::bind(&BleFtpClient::print_file_result, this, std::placeholders::_1);
     }
 
     /*
@@ -106,6 +111,30 @@ public:
     virtual bool process_cmd_delete( const std::string& lfile) override {
         logger::log(logger::LLOG::DEBUG, "ftpc", std::string(__func__) + " DELE for: " + lfile);
         return process_request_w_param(pi_ble::ble_ftp::CmdList::Cmd_Dele, lfile);
+    }
+
+    /*
+    * process RETR command
+    */
+    virtual bool process_cmd_download( const std::string& lfile) {
+        logger::log(logger::LLOG::DEBUG, "ftpc", std::string(__func__) + " RETR for: " + lfile);
+
+        bool res = cmd_send(pi_ble::ble_ftp::Cmd_Retr, lfile);
+        if( res ){
+            res = cmd_process_response();
+
+            if( res ){ //start file operation
+                _pfile->set_filename( lfile );
+                _pfile->start();
+            }
+        }
+
+        return res;
+    }
+
+
+    void print_file_result(std::string& result) const {
+        std::cout <<  result << std::endl;
     }
 
 private:

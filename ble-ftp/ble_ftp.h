@@ -64,6 +64,18 @@ public:
 
     int wait_connection(const uint8_t wait_for = WAIT_READ, const int wait_interval = 1, const bool break_if_timeout = false);
 
+    /*
+    * Currnet directory
+    */
+    const std::string get_curr_dir() const {
+        return _current_dir;
+    }
+
+    void set_curr_dir( const std::string current_dir ){
+        _current_dir = current_dir;
+    }
+
+
 protected:
     uint16_t _port;   //server command port number
 
@@ -106,6 +118,8 @@ protected:
     * Break IF timeour - stop waiting if nothing was detected during wait interval
     */
     int wait_for_descriptor(int fd, const uint8_t wait_for = WAIT_READ, const int wait_interval = 1, const bool break_if_timeout = false);
+
+    std::string _current_dir;
 
 public:
     //Send command to server
