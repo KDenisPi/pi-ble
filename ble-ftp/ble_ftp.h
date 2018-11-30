@@ -75,14 +75,27 @@ public:
         _current_dir = current_dir;
     }
 
+    void set_address( const std::string& address) {
+        _address = address;
+    }
+
+    const std::string get_address() const {
+        return _address;
+    }
 
 protected:
     uint16_t _port;   //server command port number
+    std::string _address; //server address
 
     int _sock_cmd;
     bool _server; //USe blocking of non blocking connection
 
+
     char buffer_cmd[MAX_CMD_BUFFER_LENGTH];
+
+    const std::string get_full_path(const std::string& fname ) const {
+        return ( fname[0] == '/' ? fname : get_curr_dir() + "/" + fname);
+    }
 
     //Get socket used for sending/receiving data
     virtual int get_cmd_socket() {
@@ -115,7 +128,7 @@ protected:
     * Wait untill socked will not ready for read/write
     *
     * Wait interval in seconds (defauld 1 sec)
-    * Break IF timeour - stop waiting if nothing was detected during wait interval
+    * Break IF timeout - stop waiting if nothing was detected during wait interval
     */
     int wait_for_descriptor(int fd, const uint8_t wait_for = WAIT_READ, const int wait_interval = 1, const bool break_if_timeout = false);
 

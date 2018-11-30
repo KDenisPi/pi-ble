@@ -25,6 +25,8 @@ int main (int argc, char* argv[])
   std::cout <<  "Connecting Addr: " << argv[1] << " Port:" << argv[2] << std::endl;
 
   pi_ble::ble_ftp::BleFtpClient bleClient(port);
+  bleClient.set_curr_dir("/home/deniskudia/Downloads");
+
   if( bleClient.connect_to(argv[1], port)){
     std::cout <<  "Connected" << std::endl;
 
@@ -50,7 +52,7 @@ int main (int argc, char* argv[])
             bleClient.process_cmd_cdup();
           break;
         case pi_ble::ble_ftp::CmdList::Cmd_List:
-            bleClient.process_cmd_list();
+            bleClient.process_cmd_list(cmd.second);
           break;
         case pi_ble::ble_ftp::CmdList::Cmd_Cwd:
             bleClient.process_cmd_cwd(cmd.second);
@@ -63,6 +65,15 @@ int main (int argc, char* argv[])
           break;
         case pi_ble::ble_ftp::CmdList::Cmd_Dele:
             bleClient.process_cmd_delete(cmd.second);
+          break;
+        case pi_ble::ble_ftp::CmdList::Cmd_Retr:
+            bleClient.process_cmd_retr(cmd.second);
+          break;
+        case pi_ble::ble_ftp::CmdList::Cmd_Stor:
+            bleClient.process_cmd_stor(cmd.second);
+          break;
+        case pi_ble::ble_ftp::CmdList::Cmd_Ls:
+            bleClient.process_cmd_ls(cmd.second);
           break;
         default:
           std::cout << "Unknown command" << endl;

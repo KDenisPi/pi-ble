@@ -38,6 +38,7 @@ enum CmdList {
     Cmd_Dele, //delete file
     Cmd_Retr, //Download file from server
     Cmd_Stor, //Upload file to server
+    Cmd_Ls, //list files on client
     Cmd_Unknown,
     Cmd_Timeout,
     Cmd_Error
@@ -70,13 +71,13 @@ protected:
     virtual bool process_cmd_help() { return false; }
     //process EXIT command
     virtual bool process_cmd_quit() { return false; }
-    //process PWD command
+    //process PWD command (Print current folder on server)
     virtual bool process_cmd_pwd() { return false; }
-    //process CWD command
+    //process CWD command (Change current folder on server)
     virtual bool process_cmd_cwd(const std::string& dpath, const std::string msg = "CWD") { return false; }
-    //process LIST command
+    //process LIST command (List files on current server folder)
     virtual bool process_cmd_list( const std::string& ldir = "" ) { return false; }
-    //process CDUP command
+    //process CDUP command (Change server folder to up level)
     virtual bool process_cmd_cdup() { return false; }
     //process MKD command
     virtual bool process_cmd_mkdir( const std::string& ldir) { return false; }
@@ -85,9 +86,12 @@ protected:
     //process DELE command
     virtual bool process_cmd_delete( const std::string& lfile) { return false; }
     //process RETR command
-    virtual bool process_cmd_download( const std::string& lfile) { return false; }
+    virtual bool process_cmd_retr( const std::string& lfile) { return false; }
     //process STOR command
-    virtual bool process_cmd_upload( const std::string& lfile) { return false; }
+    virtual bool process_cmd_stor( const std::string& lfile) { return false; }
+    //process LS command (List files on current client folder)
+    virtual bool process_cmd_ls( const std::string& ldir = "" ) { return false; }
+
 
 public:
     static const std::string get_cmd_by_code(int cmd) {

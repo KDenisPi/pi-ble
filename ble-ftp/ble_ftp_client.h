@@ -28,7 +28,8 @@ public:
     BleFtpClient(const uint16_t port_cmd) : BleFtp(port_cmd, false) {
         initialize();
 
-        set_curr_dir("~/Downloads");
+        if( get_curr_dir().empty())
+            set_curr_dir("/tmp");
 
         _pfile = std::shared_ptr<BleFtpFile>(new BleFtpFile(false, port_cmd+1));
         _pfile->finish_callback = std::bind(&BleFtpClient::print_file_result, this, std::placeholders::_1);
@@ -116,7 +117,7 @@ public:
     /*
     * process RETR command
     */
-    virtual bool process_cmd_download( const std::string& lfile) {
+    virtual bool process_cmd_retr( const std::string& lfile) {
         logger::log(logger::LLOG::DEBUG, "ftpc", std::string(__func__) + " RETR for: " + lfile);
 
         bool res = cmd_send(pi_ble::ble_ftp::Cmd_Retr, lfile);
@@ -124,12 +125,53 @@ public:
             res = cmd_process_response();
 
             if( res ){ //start file operation
-                _pfile->set_filename( lfile );
+                _pfile->set_filename( get_curr_dir() + "/" + lfile );
+                _pfile->set_address( get_address() );
+                _pfile->set_receiver(true);
                 _pfile->start();
             }
         }
 
         return res;
+    }
+
+    /*
+    * process STOR command
+    */
+    virtual bool process_cmd_stor( const std::string& lfile) {
+        logger::log(logger::LLOG::DEBUG, "ftpc", std::string(__func__) + " STOR for: " + lfile);
+
+        bool res = cmd_send(pi_ble::ble_ftp::Cmd_Stor, lfile);
+        if( res ){
+            res = cmd_process_response();
+
+            if( res ){ //start file operation
+                _pfile->set_filename( get_curr_dir() + "/" + lfile );
+                _pfile->set_address( get_address() );
+                _pfile->set_receiver(false);
+                _pfile->start();
+            }
+        }
+
+        return res;
+    }
+
+    /*
+    * process LS command
+    */
+    virtual bool process_cmd_ls( const std::string& ldir = ""  ) override {
+        logger::log(logger::LLOG::DEBUG, "ftpd", std::string(__func__) + " [" + ldir + "]");
+
+        std::string response = prepare_result(200, "LIST");
+        int res = piutils::get_dir_content( (ldir.empty() ? _current_dir : ldir), response, MAX_CMD_BUFFER_LENGTH - 256);
+        if(res < 0 ){
+            response += "---------------- cut ----------------\n";
+        }
+        else if( res > 0 ){
+            response = prepare_result(500, "LS Error: " + std::to_string(res));
+        }
+
+        std::cout <<  response << std::endl;
     }
 
 

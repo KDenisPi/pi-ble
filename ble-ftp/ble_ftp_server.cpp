@@ -164,6 +164,12 @@ void BleFtpServer::worker(BleFtpServer* owner){
                         case pi_ble::ble_ftp::CmdList::Cmd_Dele:
                             owner->process_cmd_delete(cmd.second);
                             break;
+                        case pi_ble::ble_ftp::CmdList::Cmd_Retr:
+                            owner->process_cmd_retr(cmd.second);
+                            break;
+                        case pi_ble::ble_ftp::CmdList::Cmd_Stor:
+                            owner->process_cmd_stor(cmd.second);
+                            break;
                     }
                 }
                 //Close client connection

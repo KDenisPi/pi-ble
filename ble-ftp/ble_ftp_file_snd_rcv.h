@@ -54,6 +54,10 @@ public:
         logger::log(logger::LLOG::DEBUG, "SndRcv", std::string(__func__) + " Receiver: " + (_receiver ? "true " : "false "));
     }
 
+    bool get_receiver() const {
+        return _receiver;
+    }
+
     /*
     *
     */
@@ -134,6 +138,11 @@ public:
             else{
                 res = fsend_receive( _fd, _nd ); //Sender: Read from file and write to network
             }
+
+            if( res )
+                result = std::string("200 File successfully") + (is_receiver() ? " received" : " sent");
+            else
+                result = std::string("400 File ") + (is_receiver() ? " receiveing " : " sending ") + " failed";
         }
         else {
             result = "500 Socket error or timeout detected";
@@ -141,7 +150,6 @@ public:
         }
 
         if( this->finish_callback ){
-            result = std::string("200 File successfully") + (is_receiver() ? " received" : "sent");
             this->finish_callback(result);
         }
 
@@ -230,6 +238,7 @@ protected:
     * Prepare source / destination file
     */
     bool prepare_src_dst() {
+        logger::log(logger::LLOG::DEBUG, "SndRcv", std::string(__func__) + " Receiver : " + std::to_string(_receiver) + " filename: " + _filename);
 
         if( _filename.empty() )
             return false;

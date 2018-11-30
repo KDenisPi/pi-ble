@@ -30,7 +30,7 @@ public:
     * Constructor
     */
     BleFtpServer(const uint16_t port_cmd) : BleFtp(port_cmd, false) {
-        set_curr_dir("/var/log");
+        set_curr_dir("/tmp");
         _pfile = std::shared_ptr<BleFtpFile>(new BleFtpFile(true, port_cmd+1));
     }
 
@@ -80,13 +80,14 @@ public:
 
     //process CWD command
     virtual bool process_cmd_cwd(const std::string& dpath, const std::string msg = "CWD") override {
-        logger::log(logger::LLOG::DEBUG, "ftpd", std::string(__func__) + " [" + dpath + "]");
+        std::string fpath = get_full_path(dpath);
+        logger::log(logger::LLOG::DEBUG, "ftpd", std::string(__func__) + " [" + dpath + "]" + " Full: " + fpath);
 
         std::string response;
         response = prepare_result(500, msg + " Failed");
         if(!dpath.empty()){
-            if( piutils::chkfile(dpath)){
-                set_curr_dir( dpath );
+            if( piutils::chkfile(fpath)){
+                set_curr_dir( fpath );
                 response = prepare_result(200, msg + " Set current directory to \"" + get_curr_dir() + "\"");
             }
         }
@@ -136,13 +137,15 @@ public:
     * process MKD command
     */
     virtual bool process_cmd_mkdir( const std::string& ldir ) override {
-        logger::log(logger::LLOG::DEBUG, "ftpd", std::string(__func__) + " MKD [" + ldir + "]");
+
+        std::string fpath = get_full_path(ldir);
+        logger::log(logger::LLOG::DEBUG, "ftpd", std::string(__func__) + " MKD [" + ldir + "]" + " Full: " + fpath);
 
         std::string response;
         if(!ldir.empty()){
-            int res = mkdir( ldir.c_str(), S_IWUSR|S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH );
+            int res = mkdir( fpath.c_str(), S_IWUSR|S_IRUSR|S_IXUSR|S_IRGRP|S_IXGRP|S_IROTH|S_IXOTH );
             if( res == 0 || (res == -1 && errno == EEXIST)){
-                response = prepare_result(200, "MKD Directory \"" + ldir + "\" created");
+                response = prepare_result(200, "MKD Directory \"" + fpath + "\" created");
             }
             else
                 response = prepare_result(500, "MKD Failed Error: " + std::to_string(errno));
@@ -158,13 +161,14 @@ public:
     * process RMD command
     */
     virtual bool process_cmd_rmdir( const std::string& ldir ) override {
-        logger::log(logger::LLOG::DEBUG, "ftpd", std::string(__func__) + " RMD [" + ldir + "]");
+        std::string fpath = get_full_path(ldir);
+        logger::log(logger::LLOG::DEBUG, "ftpd", std::string(__func__) + " RMD [" + ldir + "]" + " Full: " + fpath);
 
         std::string response;
         if(!ldir.empty()){
-            int res = rmdir( ldir.c_str() );
+            int res = rmdir( fpath.c_str() );
             if( res == 0 ){
-                response = prepare_result(200, "RMD Directory \"" + ldir + "\" removed");
+                response = prepare_result(200, "RMD Directory \"" + fpath + "\" removed");
             }
             else
                 response = prepare_result(500, "RMD Failed Error: " + std::to_string(errno));
@@ -180,13 +184,14 @@ public:
     * process DELE command
     */
     virtual bool process_cmd_delete( const std::string& lfile) override {
-        logger::log(logger::LLOG::DEBUG, "ftpd", std::string(__func__) + " DELE [" + lfile + "]");
+        std::string fpath = get_full_path(lfile);
+        logger::log(logger::LLOG::DEBUG, "ftpd", std::string(__func__) + " DELE [" + lfile + "]" + " Full: " + fpath);
 
         std::string response;
         if(!lfile.empty()){
-            int res = remove( lfile.c_str() );
+            int res = remove( fpath.c_str() );
             if( res == 0 ){
-                response = prepare_result(200, "DELE File \"" + lfile + "\" deleted");
+                response = prepare_result(200, "DELE File \"" + fpath + "\" deleted");
             }
             else
                 response = prepare_result(500, "DELE Failed Error: " + std::to_string(errno));
@@ -198,6 +203,61 @@ public:
         return  write_data( get_cmd_socket(), response.c_str(), response.length());
     }
 
+    /*
+    * process RETR command
+    */
+    virtual bool process_cmd_retr( const std::string& lfile) override {
+        std::string fpath = get_curr_dir() + "/" + lfile;
+        logger::log(logger::LLOG::DEBUG, "ftpd", std::string(__func__) + " RETR [" + lfile + "]" + " Full: " + fpath);
+
+        std::string response;
+        if(!lfile.empty()){
+            if( piutils::chkfile(fpath)){
+                response = prepare_result(200, "RETR File \"" + fpath + "\"");
+                if( _pfile->is_stopped()){
+                    _pfile->set_filename( fpath );
+                    _pfile->start();
+                }
+                else {
+                    response = prepare_result(400, "RETR  Server busy. Try later.");
+                }
+            }
+            else {
+                response = prepare_result(400, "RETR  Filename not exist or access denied");
+            }
+        }
+        else {
+            response = prepare_result(400, "RETR  Filename name is empty.");
+        }
+
+        return  write_data( get_cmd_socket(), response.c_str(), response.length());
+    }
+
+    /*
+    * process STOR command
+    */
+    virtual bool process_cmd_stor( const std::string& lfile) override {
+        std::string fpath = get_curr_dir() + "/" + lfile;
+        logger::log(logger::LLOG::DEBUG, "ftpd", std::string(__func__) + " STOR [" + lfile + "]" + " Full: " + fpath);
+
+        std::string response;
+        if(!lfile.empty()){
+            response = prepare_result(200, "STOR File \"" + fpath + "\"");
+            if( _pfile->is_stopped()){
+                _pfile->set_receiver(true);
+                _pfile->set_filename( fpath );
+                _pfile->start();
+            }
+            else {
+                response = prepare_result(400, "STOR  Server busy. Try later.");
+            }
+        }
+        else {
+            response = prepare_result(400, "STOR  Filename name is empty.");
+        }
+
+        return  write_data( get_cmd_socket(), response.c_str(), response.length());
+    }
 
 
     //service function

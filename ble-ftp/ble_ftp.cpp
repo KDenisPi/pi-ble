@@ -20,7 +20,7 @@ namespace ble_ftp {
 
 const char TAG[] = "ftplib";
 
-std::string BleFtpCommand::cmd_list[] = { "LIST", "HELP", "QUIT", "PWD", "CWD", "CDUP", "RMD", "MKD", "DELE", "RETR", "STOR", "EOF" };
+std::string BleFtpCommand::cmd_list[] = { "LIST", "HELP", "QUIT", "PWD", "CWD", "CDUP", "RMD", "MKD", "DELE", "RETR", "STOR", "LS", "EOF" };
 
 //connect socket
 bool BleFtp::initialize(){
@@ -186,6 +186,8 @@ int  BleFtp::connect_to(const std::string daddress, const uint16_t dchannel){
         logger::log(logger::LLOG::ERROR, TAG, std::string(__func__) + " Connection failed: " + std::to_string(errno));
         return -1;
     }
+
+    set_address( daddress );
 
     return _sock_cmd;
 }
